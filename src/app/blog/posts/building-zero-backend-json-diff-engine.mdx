@@ -1,0 +1,183 @@
+---
+title: "Building a Zero-Backend JSON Diff Engine for APIs"
+publishedAt: "2026-06-10"
+summary: "How RouteLens's structural JSON diffing engine intelligently handles array reordering, type changes, and nested schema drift — all running in the browser with no server."
+image: "/images/routelens_dashboard_wide.png"
+tag: "Frontend"
+---
+
+Text-based diff tools are great for code. They're terrible for JSON API responses.
+
+When I built **RouteLens**, a client-side API directory and diffing tool, the core challenge was: how do you diff two JSON objects in a way that's *meaningful* for API developers, not just byte-accurate?
+
+## Why `JSON.stringify` Diffing Fails
+
+The naive approach is to serialize both objects to strings and run a text diff:
+
+```javascript
+const diff = textDiff(JSON.stringify(a), JSON.stringify(b));
+```
+
+This produces garbage output for APIs because:
+
+1. **Array reordering is a false alarm.** If a `GET /products` response returns items in a different order, that's not a schema change — it's expected API non-determinism. A text diff will report it as dozens of deletions and insertions.
+
+2. **Type changes are buried.** `"price": "19.99"` → `"price": 19.99` (string to number) is a *breaking change* for API consumers. In a text diff, it's visually identical unless you squint.
+
+3. **Nested changes are hard to trace.** Finding where a deeply nested field changed in a 500-line JSON string diff is a nightmare.
+
+## Building a Structural Diff Engine
+
+RouteLens's diff engine operates on the parsed object tree, not the serialized string. Here's the core recursive algorithm:
+
+```typescript
+type DiffResult = {
+  type: "added" | "removed" | "changed" | "type_changed" | "unchanged";
+  path: string;
+  oldValue?: unknown;
+  newValue?: unknown;
+  oldType?: string;
+  newType?: string;
+};
+
+function diffObjects(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+  path = ""
+): DiffResult[] {
+  const results: DiffResult[] = [];
+  const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
+
+  for (const key of allKeys) {
+    const currentPath = path ? `${path}.${key}` : key;
+
+    if (!(key in a)) {
+      results.push({ type: "added", path: currentPath, newValue: b[key] });
+      continue;
+    }
+    if (!(key in b)) {
+      results.push({ type: "removed", path: currentPath, oldValue: a[key] });
+      continue;
+    }
+
+    const oldType = Array.isArray(a[key]) ? "array" : typeof a[key];
+    const newType = Array.isArray(b[key]) ? "array" : typeof b[key];
+
+    if (oldType !== newType) {
+      // Type change is a breaking API change — surface it explicitly
+      results.push({
+        type: "type_changed",
+        path: currentPath,
+        oldValue: a[key],
+        newValue: b[key],
+        oldType,
+        newType,
+      });
+      continue;
+    }
+
+    if (oldType === "object" && a[key] !== null && b[key] !== null) {
+      results.push(
+        ...diffObjects(
+          a[key] as Record<string, unknown>,
+          b[key] as Record<string, unknown>,
+          currentPath
+        )
+      );
+    } else if (oldType === "array") {
+      results.push(...diffArrays(a[key] as unknown[], b[key] as unknown[], currentPath));
+    } else if (a[key] !== b[key]) {
+      results.push({ type: "changed", path: currentPath, oldValue: a[key], newValue: b[key] });
+    }
+  }
+
+  return results;
+}
+```
+
+## The Hard Part: Smart Array Diffing
+
+Arrays are where naive diffing really falls apart. If `GET /users` returns users in a different order, we don't want to report 50 false changes.
+
+RouteLens's approach: **anchor arrays by an identity key**.
+
+```typescript
+function diffArrays(a: unknown[], b: unknown[], path: string): DiffResult[] {
+  // Try to find a natural identity key (id, slug, key, name)
+  const IDENTITY_KEYS = ["id", "slug", "key", "uuid", "name"];
+  
+  const identityKey = IDENTITY_KEYS.find(
+    (k) =>
+      a.length > 0 &&
+      typeof a[0] === "object" &&
+      a[0] !== null &&
+      k in (a[0] as object)
+  );
+
+  if (!identityKey) {
+    // Primitive arrays: fall back to positional comparison
+    return diffPrimitiveArrays(a, b, path);
+  }
+
+  // Build lookup maps by identity key
+  const aMap = new Map(
+    a.map((item) => [(item as Record<string, unknown>)[identityKey], item])
+  );
+  const bMap = new Map(
+    b.map((item) => [(item as Record<string, unknown>)[identityKey], item])
+  );
+
+  const results: DiffResult[] = [];
+
+  for (const [id, aItem] of aMap) {
+    if (!bMap.has(id)) {
+      results.push({ type: "removed", path: `${path}[${identityKey}=${id}]`, oldValue: aItem });
+    } else {
+      results.push(
+        ...diffObjects(
+          aItem as Record<string, unknown>,
+          bMap.get(id) as Record<string, unknown>,
+          `${path}[${identityKey}=${id}]`
+        )
+      );
+    }
+  }
+
+  for (const [id, bItem] of bMap) {
+    if (!aMap.has(id)) {
+      results.push({ type: "added", path: `${path}[${identityKey}=${id}]`, newValue: bItem });
+    }
+  }
+
+  return results;
+}
+```
+
+Now `[id=5]` is compared to `[id=5]` regardless of position — a reordered array with no actual changes produces **zero diff entries**.
+
+## Running Entirely in the Browser
+
+A key constraint for RouteLens was **zero outbound network calls** — API responses often contain proprietary data, and sending them to a server for diffing is a non-starter.
+
+The entire engine runs as a pure TypeScript module. Combined with Next.js's `output: 'export'` mode (static HTML/JS/CSS), there is no server to send data to even if you tried.
+
+```typescript
+// next.config.mjs
+const nextConfig = {
+  output: "export", // No server, no serverless functions
+};
+```
+
+This also means the tool is free to host on Vercel Hobby tier indefinitely.
+
+## Takeaway
+
+When building developer tools, the real value isn't in parsing the obvious cases — it's in handling the edge cases gracefully. For JSON diffing, that means:
+
+- **Explicit type change detection** (breaking change vs. value change)
+- **Identity-anchored array diffing** (no false positives from reordering)
+- **Path-based reporting** (so you know exactly where `user.address.city` changed)
+
+Text diffs are for code. Structural diffs are for data.
+
+RouteLens is [live here](https://routelens-xi.vercel.app/) and [open source](https://github.com/MilindDevX/routelens).

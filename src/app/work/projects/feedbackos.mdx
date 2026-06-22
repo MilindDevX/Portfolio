@@ -1,0 +1,43 @@
+---
+title: "FeedbackOS: AI-Powered Customer Feedback Triage"
+category: "Full Stack"
+publishedAt: "2026-05-01"
+summary: "AI triage pipeline that classifies customer feedback in < 2s — built with Groq LLaMA, AES-256-GCM encryption, and a Redis caching layer."
+images: ["/images/feedbackos_dashboard_wide.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Full-stack Developer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+hostedUrl: "https://feedbackos.vercel.app"
+role: "Lead Developer"
+stack: ["Next.js", "Groq LLaMA", "Redis", "PostgreSQL", "AES-256-GCM", "Zod"]
+link: "https://github.com/MilindDevX/feedbackos"
+---
+
+## Project Overview
+
+FeedbackOS is a production-grade customer feedback triage tool designed to help product teams digest large volumes of user feedback effortlessly. It automatically tags, categorizes, and routes incoming feedback by leveraging high-speed LLM inference. In a recent portfolio audit, this system scored an impressive 81/100 for its architecture and security posture.
+
+## The Problem
+
+Product teams were drowning in raw, unstructured feedback from various channels. Manual triage was slow and error-prone, meaning critical feature requests and bug reports were often delayed. We needed an automated pipeline capable of processing incoming data securely and efficiently.
+
+## Technical Decisions & Architecture
+
+To meet our strict performance and security goals, I adopted the following stack:
+
+- **Next.js & PostgreSQL**: For our robust, serverless-ready web application and primary data persistence.
+- **Groq LLaMA**: Chosen specifically for ultra-low latency LLM inference, allowing real-time AI tagging without bottlenecking the user experience.
+- **Redis**: Used as a caching layer to store recent tags and alleviate database loads.
+- **AES-256-GCM & Zod**: To ensure data integrity and security, I implemented rigorous Zod validation across all endpoints. Crucially, all incoming webhooks are verified and sensitive feedback data is encrypted at rest using AES-256-GCM.
+
+### AI Tagging Pipeline
+
+When a feedback webhook is received, it hits our secure Next.js API route. The payload is validated via Zod, then passed to the Groq API for rapid NLP processing. LLaMA categorizes the feedback (e.g., 'bug', 'feature request', 'UX issue') and extracts actionable keywords. The results are cached in Redis and permanently stored in PostgreSQL.
+
+## Measurable Outcomes
+
+- **Security Confidence**: Passed rigorous simulated security audits thanks to end-to-end webhook verification and AES-256-GCM encryption.
+- **Performance**: Dropped average feedback triage latency from hours to under 2 seconds.
+- **Reliability**: Backed by a comprehensive test suite (Jest/Playwright), ensuring zero downtime during major data spikes.

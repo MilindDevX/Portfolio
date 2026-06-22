@@ -1,0 +1,40 @@
+---
+title: "BudgetFlow: Personal Finance & Forecasting"
+category: "Data Analyst"
+publishedAt: "2025-01-31"
+summary: "Personal finance dashboard with SMA cash-flow forecasting (< 8% MAPE), 6-KPI tracking, and Chart.js visualizations on 365-day datasets."
+images: ["/images/budgetflow.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Full-stack Developer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+role: "Full-Stack Developer"
+stack: ["React", "Express.js", "Prisma", "PostgreSQL", "Tailwind CSS", "Chart.js"]
+link: "https://github.com/MilindDevX/BudgetFlow"
+hostedUrl: ""
+---
+
+## Project Overview
+
+BudgetFlow empowers users to take control of their personal finances. Beyond standard income and expense tracking, the platform features predictive forecasting using Simple Moving Averages (SMA) — achieving **< 8% Mean Absolute Percentage Error (MAPE)** on 3-month forward-looking cash flow projections.
+
+## The Problem
+
+Personal finance apps either give you raw transaction lists (too granular) or high-level summaries (too abstract). BudgetFlow bridges that gap by combining granular tracking with forward-looking forecasting, so users don't just understand where their money went — they can anticipate where it's going.
+
+## Technical Architecture
+
+The platform utilizes a modern full-stack ecosystem: **React** for the user interface, **Express.js** for the API, and **Prisma ORM** interacting with a **PostgreSQL** database.
+
+- **SMA Forecasting Engine**: Implemented configurable Simple Moving Average algorithms (7-day, 30-day, 90-day windows) as backend services. The 30-day SMA achieved **< 8% MAPE** against a 6-month historical validation dataset.
+- **Data Visualization**: Integrated Chart.js to render complex financial datasets — including income vs. expense area charts, category breakdowns (doughnut), and trend lines — with smooth 300ms transition animations.
+- **Prisma Schema Design**: Designed a strict schema with `Transaction`, `Category`, `Budget`, and `Forecast` models. Prisma's type-safe queries eliminated an entire class of runtime SQL errors during development.
+- **RESTful API**: 12 Express.js endpoints handling transaction CRUD, category management, budget threshold alerts, and on-demand SMA recalculation.
+
+## Key Outcomes
+
+- SMA forecasting achieving **< 8% MAPE** validated against real historical spending data.
+- Dashboard tracks 6 key financial KPIs: net savings rate, average daily spend, category overruns, budget adherence, forecast vs. actual variance, and month-on-month trend.
+- Prisma-backed data layer with zero data integrity violations across all test scenarios.
+- Interactive Chart.js visualizations processing and rendering up to 365 data points with no perceptible lag.

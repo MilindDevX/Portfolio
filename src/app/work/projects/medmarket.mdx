@@ -1,0 +1,38 @@
+---
+title: "MedMarket India: Compliant Medical Marketplace"
+category: "Full Stack"
+publishedAt: "2026-03-01"
+summary: "CDSCO-compliant pharmaceutical marketplace with GPS discovery, DPCO price enforcement at the DB level, and a 5-stage order pipeline."
+images: ["/images/medmarket_dashboard_wide.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Full-stack Developer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+role: "Full-Stack Architect"
+stack: ["React 19", "Express.js 5", "PostgreSQL", "Tailwind CSS", "Redis", "JWT"]
+link: "https://github.com/MilindDevX/medmarket"
+hostedUrl: "https://med-market-self.vercel.app"
+---
+
+## Project Overview
+
+MedMarket India solves three structural problems in the Indian OTC medicine retail market: counterfeit medicines, price opacity, and expiry losses. This platform provides a location-aware, multi-sided marketplace connecting verified pharmacies with consumers, built specifically for regulatory compliance under the Drugs & Cosmetics Act and CDSCO guidelines.
+
+## The Problem
+
+The local pharmacy market suffers from unverified inventory and MRP (Maximum Retail Price) violations. Pharmacies also deal with significant "dead stock" and expired medicines. We needed a robust platform with discrete portals for Consumers, Pharmacy Owners, and Admins to strictly enforce compliance while providing a seamless shopping experience.
+
+## Technical Decisions & Architecture
+
+To handle strict regulatory and performance requirements, I built the platform using **Node.js 20 / Express 5** for the backend and **React 19** for the frontend, heavily utilizing **Zustand** for global state.
+
+- **Strict Role-Based Access Control**: Requests flow through a middleware pipeline (`authenticate` → `requireRole` → `Zod validate`).
+- **DPCO Price Enforcement**: A strict PostgreSQL `CHECK` constraint (`selling_price ≤ MRP`) prevents price gouging at the database level.
+- **Inventory & Expiry Logic**: Built automated backend services to trigger tiered alerts for expiring stock (60 days, 30 days) and detect dead stock based on sales inactivity.
+
+## Measurable Outcomes
+
+- **Verified Compliance**: Enforced CDSCO registration validation, eliminating counterfeit listings.
+- **Robust Architecture**: Achieved comprehensive test coverage and clean service-repository separation, enabling rapid scaling.
+- **Seamless Consumer Experience**: Integrated location-aware GPS discovery and a 5-stage real-time order tracking pipeline.

@@ -1,0 +1,41 @@
+---
+title: "TruthLens: AI Content Verification System"
+category: "Data Analyst"
+publishedAt: "2025-06-15"
+summary: "ML platform that detects AI-generated text with 91.3% F1-score — DistilBERT inference at < 300ms, served via Dockerized FastAPI."
+images: ["/images/truthlens.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Machine Learning Engineer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+role: "Machine Learning Engineer"
+stack: ["FastAPI", "Python", "React", "Docker", "PostgreSQL", "Transformers"]
+link: "https://github.com/MilindDevX/TruthLens"
+hostedUrl: ""
+---
+
+## Project Overview
+
+TruthLens tackles the growing challenge of digital misinformation. It is an end-to-end AI platform that analyzes text to detect AI-generated content and assess credibility — achieving a **91.3% F1-score** — and presents results through a sleek, futuristic analysis dashboard.
+
+## The Problem
+
+With the explosion of LLM-generated content, distinguishing human-written text from AI-generated content has become a critical trust problem for publishers, educators, and platforms. Existing tools were too slow, too expensive, or returned opaque results with no interpretability.
+
+## Technical Architecture
+
+This project features a complex, decoupled architecture: a highly concurrent **FastAPI (Python)** backend serving inference requests, orchestrated via **Docker**, and a modern **React** frontend.
+
+- **ML Pipeline**: Engineered a complete text analysis pipeline using fine-tuned Transformer models (DistilBERT-based) for binary classification: AI-generated vs. human-written. Also includes a credibility scoring module using ensemble heuristics.
+- **Model Performance**: Achieved **91.3% F1-score** and **93.1% accuracy** on a balanced 10,000-sample test set combining GPT-4, Claude, and human-written text.
+- **Inference API**: FastAPI backend processes requests in **< 300ms average latency** using batched tokenization and model caching in memory.
+- **Containerization**: Fully Dockerized with `docker-compose` — separates the PostgreSQL database, FastAPI inference service, and React frontend into independently scalable microservices.
+- **Interpretability UI**: Designed a "cyber-aesthetic" glassmorphism dashboard that renders token-level confidence heatmaps, letting users understand *why* text was flagged, not just *that* it was flagged.
+
+## Key Outcomes
+
+- **91.3% F1-score** and **93.1% accuracy** across a diverse, balanced evaluation set.
+- **< 300ms** average inference latency on CPU (no GPU required) via model optimization.
+- Fully containerized deployment with Docker Compose, reducing setup time from hours to a single `docker-compose up` command.
+- Token heatmap visualization providing interpretability that black-box tools lack entirely.

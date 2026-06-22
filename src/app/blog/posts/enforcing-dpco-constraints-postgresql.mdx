@@ -1,0 +1,106 @@
+---
+title: "Enforcing Price Compliance at the Database Level with PostgreSQL CHECK Constraints"
+publishedAt: "2026-03-15"
+summary: "How I used a single PostgreSQL CHECK constraint to guarantee DPCO price compliance in MedMarket — and why this is strictly better than application-level validation."
+image: "/images/medmarket_dashboard_wide.png"
+tag: "Backend"
+---
+
+When building **MedMarket India**, a multi-sided pharmaceutical marketplace, I faced a regulatory requirement that couldn't afford to be "mostly right": medicines must never be sold above their **Maximum Retail Price (MRP)** as mandated by the Drug Price Control Order (DPCO).
+
+The naive approach is to validate this in your application code — a Zod schema, a service-layer check, or an Express middleware. I did all of that. But I also added one more layer that guaranteed correctness regardless of any bug in the application code.
+
+## The Problem with Application-Only Validation
+
+Application-level validation is bypassed the moment you:
+
+- Run a direct SQL query in a migration script
+- Use a database admin tool to manually fix "bad data"
+- Have a race condition between two concurrent requests
+- Introduce a bug in a future refactor that skips the middleware
+
+For something with regulatory compliance implications, "almost always enforced" is not good enough.
+
+## The Solution: A Database CHECK Constraint
+
+PostgreSQL's `CHECK` constraint is evaluated at the database engine level — it runs on every `INSERT` and `UPDATE`, regardless of where the write originates.
+
+```sql
+ALTER TABLE medicine_listings
+ADD CONSTRAINT chk_price_not_above_mrp
+CHECK (selling_price <= mrp);
+```
+
+With this in place, **it is physically impossible** to insert a row where `selling_price > mrp`. The database itself becomes the enforcer. The application validates it first for a good user experience (fast error, clear message), but the database is the final authority.
+
+## Making it Human-Friendly
+
+The raw PostgreSQL error message is cryptic. In Express.js, I catch the specific constraint violation error code and transform it:
+
+```typescript
+// middleware/errorHandler.ts
+if (error.code === "23514") { // check_violation
+  const constraint = error.constraint;
+  if (constraint === "chk_price_not_above_mrp") {
+    return res.status(400).json({
+      error: "DPCO_PRICE_VIOLATION",
+      message: "Selling price cannot exceed the Maximum Retail Price (MRP) as per DPCO regulations.",
+      field: "selling_price",
+    });
+  }
+}
+```
+
+This gives the frontend a structured, actionable error to display, while the database handles the enforcement.
+
+## Adding a Trigger for Audit Logging
+
+For regulatory compliance, it's not enough to prevent violations — you need a record of attempted violations. I added a `BEFORE UPDATE` trigger that logs any attempt to set a price above MRP:
+
+```sql
+CREATE OR REPLACE FUNCTION log_price_violation_attempt()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.selling_price > NEW.mrp THEN
+    INSERT INTO compliance_audit_log (
+      listing_id, 
+      attempted_price, 
+      mrp, 
+      attempted_at, 
+      pharmacy_id
+    ) VALUES (
+      NEW.id, 
+      NEW.selling_price, 
+      NEW.mrp, 
+      NOW(), 
+      NEW.pharmacy_id
+    );
+  END IF;
+  RETURN NEW; -- The CHECK constraint will then reject it
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_log_price_violation
+BEFORE INSERT OR UPDATE ON medicine_listings
+FOR EACH ROW EXECUTE FUNCTION log_price_violation_attempt();
+```
+
+The trigger fires *before* the CHECK constraint rejects the row, so the audit log captures the attempt even though the write fails.
+
+## The Layered Defense
+
+This gives MedMarket three independent layers of price compliance:
+
+| Layer | What it does | Bypassed by app bugs? |
+|---|---|---|
+| Zod validation | Validates input shape and types | No (but can be skipped) |
+| Service-layer check | Business logic validation with user-friendly errors | Yes, if code is wrong |
+| PostgreSQL CHECK | Absolute database-level enforcement | **Never** |
+
+The key insight is that these layers don't replace each other — they complement each other. Application validation gives a fast, friendly error. The database CHECK guarantees correctness. The trigger provides an audit trail.
+
+## Takeaway
+
+If you're building anything with regulatory, financial, or compliance implications, push your most critical invariants down to the database. The application can be wrong. The database constraint cannot be bypassed.
+
+In MedMarket's case, this single line of SQL is the most important line of code in the entire codebase.

@@ -1,0 +1,146 @@
+---
+title: "Why I Chose Groq Over OpenAI for Real-Time AI Triage"
+publishedAt: "2026-05-20"
+summary: "The latency trade-off that made Groq LLaMA the obvious choice for FeedbackOS's real-time feedback classification pipeline, and how to secure AI webhooks with AES-256-GCM."
+image: "/images/feedbackos_dashboard_wide.png"
+tag: "AI"
+---
+
+When building **FeedbackOS**, an AI-powered customer feedback triage system, I had to make a critical architectural decision early: which LLM provider to use for real-time inference?
+
+The answer wasn't obvious at first. I went through a few options before landing on Groq — and the reasoning reveals something important about building AI features in production.
+
+## The Latency Problem with Standard LLMs
+
+FeedbackOS's use case is real-time feedback triage. When a webhook delivers user feedback, the product team expects to see it classified and tagged in their dashboard within seconds. They've been dealing with manual triage that takes hours — so dropping to "a few seconds" is already transformational.
+
+But initial testing with **OpenAI GPT-4o** gave average response times of **800ms–1.5s** per classification request. For a single request, fine. But feedback comes in batches — product launches, feature releases, app store updates — and I needed the pipeline to handle 50–100 concurrent classifications without backing up.
+
+At 1s per request, that's 50–100 seconds of queue time for a launch batch. Not fast enough.
+
+## Why Groq Changes the Math
+
+**Groq** runs LLM inference on custom hardware (Language Processing Units, LPUs) designed specifically for sequential token generation. For LLaMA 3.1 70B, Groq delivers **~275 tokens/second** versus OpenAI's ~60–80 tokens/second for comparable models.
+
+In practice, for my classification prompt (~150 token response), this translated to:
+
+| Provider | Avg Latency | P95 Latency |
+|---|---|---|
+| OpenAI GPT-4o | ~950ms | ~1,400ms |
+| Groq LLaMA 3.1 70B | ~180ms | ~280ms |
+
+A **5x latency improvement** for a classification task where the context window requirement is modest. The accuracy trade-off? Minimal for structured classification tasks with a well-crafted system prompt.
+
+## The Classification Prompt
+
+The key to reliable classification isn't just the model — it's the prompt structure. FeedbackOS uses a strict JSON-schema-enforced output format:
+
+```typescript
+const SYSTEM_PROMPT = `You are a product feedback classifier. Analyze the feedback and return ONLY a JSON object with this exact schema:
+{
+  "category": "bug" | "feature_request" | "ux_issue" | "performance" | "praise" | "billing" | "other",
+  "sentiment": "positive" | "neutral" | "negative",
+  "priority": "critical" | "high" | "medium" | "low",
+  "tags": string[], // 2-5 specific, actionable keywords
+  "summary": string // One sentence, max 15 words
+}
+Do not include any text outside the JSON object.`;
+```
+
+Groq's LLaMA models are excellent at following strict JSON output instructions, which eliminates the need for a retry loop to handle malformed responses.
+
+## Securing the Webhook Pipeline
+
+Speed is nothing without security. FeedbackOS receives webhooks from third-party services (Intercom, Typeform, etc.), which means the endpoint is publicly accessible. I implemented two layers of security:
+
+### 1. HMAC Webhook Signature Verification
+
+Every webhook provider signs its payload with an HMAC-SHA256 signature. FeedbackOS verifies this before touching the data:
+
+```typescript
+import crypto from "crypto";
+
+export function verifyWebhookSignature(
+  payload: string,
+  signature: string,
+  secret: string
+): boolean {
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(payload, "utf8")
+    .digest("hex");
+
+  // Use timingSafeEqual to prevent timing attacks
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, "hex"),
+    Buffer.from(expectedSignature, "hex")
+  );
+}
+```
+
+Note the `timingSafeEqual` — a standard string comparison (`===`) leaks timing information that can be exploited to forge signatures character by character.
+
+### 2. AES-256-GCM Encryption at Rest
+
+Feedback data often contains personally identifiable information (PII). Before storing raw feedback text in PostgreSQL, it's encrypted:
+
+```typescript
+import crypto from "crypto";
+
+const ALGORITHM = "aes-256-gcm";
+const KEY = Buffer.from(process.env.ENCRYPTION_KEY!, "hex"); // 32 bytes
+
+export function encryptFeedback(text: string): { ciphertext: string; iv: string; tag: string } {
+  const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+  const cipher = crypto.createCipheriv(ALGORITHM, KEY, iv);
+
+  const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag(); // GCM authentication tag
+
+  return {
+    ciphertext: encrypted.toString("base64"),
+    iv: iv.toString("base64"),
+    tag: tag.toString("base64"),
+  };
+}
+
+export function decryptFeedback(ciphertext: string, iv: string, tag: string): string {
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    KEY,
+    Buffer.from(iv, "base64")
+  );
+  decipher.setAuthTag(Buffer.from(tag, "base64"));
+
+  return Buffer.concat([
+    decipher.update(Buffer.from(ciphertext, "base64")),
+    decipher.final(),
+  ]).toString("utf8");
+}
+```
+
+AES-256-GCM is **authenticated encryption** — the `tag` proves the ciphertext hasn't been tampered with. If someone modifies the encrypted data in the database, decryption fails with an authentication error rather than silently returning garbage.
+
+## The Full Pipeline
+
+Putting it together, a webhook arrives and flows through:
+
+```
+Webhook → HMAC Verification → Zod Schema Validation
+  → Groq LLaMA Classification (~180ms)
+  → AES-256-GCM Encryption
+  → PostgreSQL Storage + Redis Cache
+  → WebSocket Push to Dashboard
+```
+
+Total pipeline time from webhook receipt to dashboard update: **< 2 seconds**, even under load.
+
+## Lessons Learned
+
+1. **Match the model to the task.** Groq + LLaMA 70B is the right tool for structured classification. GPT-4o is worth the cost for complex reasoning. Don't default to the biggest model.
+
+2. **JSON schema enforcement > response parsing.** Structured outputs eliminate retry loops and make your pipeline deterministic.
+
+3. **Defense in depth for AI endpoints.** Signature verification + input validation + encryption isn't paranoia — it's the baseline for any production AI feature handling user data.
+
+FeedbackOS is [open source on GitHub](https://github.com/MilindDevX/feedbackos) and [live on Vercel](https://feedbackos.vercel.app).

@@ -1,0 +1,40 @@
+---
+title: "SignalStack: Intelligent Team Collaboration"
+category: "Full Stack"
+publishedAt: "2024-08-31"
+summary: "Team workspace with < 80ms WebSocket delivery, structured decision tracking, and real-time SQL analytics — built on Socket.io + PostgreSQL."
+images: ["/images/signalstack.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Full-stack Developer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+role: "Full-Stack Developer"
+stack: ["React", "Express.js", "PostgreSQL", "Socket.io", "Tailwind CSS"]
+link: "https://github.com/MilindDevX/SignalStack"
+hostedUrl: ""
+---
+
+## Project Overview
+
+SignalStack is a modern team collaboration platform designed to eliminate communication silos. It integrates real-time messaging with decision tracking and powerful analytics to help teams work smarter — delivering messages with **< 80ms end-to-end latency** via WebSockets.
+
+## The Problem
+
+Most team tools treat communication, decisions, and analytics as separate products. Switching between Slack for messaging, Notion for decisions, and a BI tool for team analytics creates context loss and overhead. SignalStack unifies all three in one coherent workspace.
+
+## Technical Architecture
+
+Built on a robust stack featuring **React (Vite)** on the frontend and **Node.js/Express** on the backend, with real-time capabilities powered by **Socket.io**. Data is securely stored and queried using **PostgreSQL**.
+
+- **Real-Time Communication**: Implemented bidirectional WebSocket communication with Socket.io. Achieved **< 80ms** average message delivery latency under a 50-concurrent-user load.
+- **Decision Tracker**: Built a structured decision log with tagged resolutions, vote tracking, and thread-linked context — replacing informal Slack threads with accountable records.
+- **Analytics Engine**: Wrote SQL aggregation pipelines to surface real-time team metrics: messages per channel, decision resolution times, and peak activity periods — rendered with Chart.js.
+- **Modern UI/UX**: Designed a polished dark-mode interface with Tailwind CSS, using semantic color tokens and a clear typographic hierarchy inspired by Linear and Vercel dashboards.
+
+## Key Outcomes
+
+- **< 80ms** WebSocket message delivery latency measured in local load testing with 50 concurrent connections.
+- Decision-tracking module reduced unresolved action items by maintaining a persistent, searchable log.
+- Analytics pipeline aggregating 10+ behavioral metrics with sub-second query performance via indexed PostgreSQL queries.
+- Consumer-grade UX with responsive layout, smooth transitions, and zero perceptible UI lag on message send.

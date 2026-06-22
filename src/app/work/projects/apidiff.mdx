@@ -1,0 +1,39 @@
+---
+title: "RouteLens: Zero-Backend API Directory & Diff Tool"
+category: "Full Stack"
+publishedAt: "2026-06-01"
+summary: "Zero-backend API directory & JSON diff engine — parses OpenAPI specs and detects structural schema drift entirely in the browser."
+images: ["/images/routelens_dashboard_wide.png"]
+team:
+  - name: "Milind Bansal"
+    role: "Full-stack Developer"
+    avatar: "/images/avatar-male.png"
+    linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
+hostedUrl: "https://routelens-xi.vercel.app/"
+role: "Frontend Engineer"
+stack: ["Next.js 14", "TypeScript", "Tailwind CSS", "js-yaml"]
+link: "https://github.com/MilindDevX/routelens"
+---
+
+## Project Overview
+
+RouteLens is a fully client-side, zero-signup developer tool that solves two massive headaches: parsing OpenAPI/Swagger specs to quickly discover API endpoints, and structurally diffing API responses to instantly identify schema changes (e.g., added fields, removed fields, or type changes like `string` → `number`).
+
+## The Problem
+
+Developers frequently struggle with undocumented APIs or massive Swagger files that require standing up a Swagger UI server. Furthermore, when API responses change unexpectedly, traditional text-based diffing tools fail to intelligently highlight structural JSON changes (like arrays being reordered). A fast, local, secure solution was needed.
+
+## Technical Decisions & Architecture
+
+The guiding principle for RouteLens was **Zero Outbound Network Calls**. 
+
+- **Next.js 14 Static Export**: By using `output: 'export'`, the tool compiles into pure HTML/JS/CSS. No serverless functions, Edge Runtime, or Node.js server is required. This guarantees data privacy and free hosting on Vercel Hobby.
+- **Client-Side OpenAPI Parsing**: Specs (both JSON and YAML) are parsed entirely in the browser. External `$ref` URLs are handled gracefully without crashing the app.
+- **Structural JSON Diffing**: I wrote a custom diffing engine that deeply compares JSON objects. It intelligently matches array elements by identity keys (like `id` or `slug`) so that a re-ordered list isn't falsely flagged as a mass deletion and insertion.
+- **Robust LocalStorage Wrapper**: User data (projects, parsed routes, baselines) is persisted in `localStorage` via a safe wrapper that catches quota limits and incognito mode restrictions, providing graceful degradation via a UI banner.
+
+## Measurable Outcomes
+
+- **Zero-Backend Security**: Developers can safely paste proprietary API responses knowing the data never leaves their browser.
+- **High Performance**: Parses multi-megabyte OpenAPI specs instantly without network latency.
+- **Enhanced Productivity**: Replaced fragile text diffs with a robust, visual structural diff that handles type changes and arrays out of the box.
