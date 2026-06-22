@@ -373,8 +373,8 @@ const blog: Blog = {
 const work: Work = {
   path: "/work",
   label: "Work",
-  title: `Projects – ${person.name}`,
-  description: `Design and dev projects by ${person.name}`,
+  title: "Things I've Built",
+  description: `A showcase of my recent design and development work.`,
 };
 
 const gallery: Gallery = {
