@@ -214,6 +214,34 @@ const about: About = {
     ],
     experiencesData: [
       {
+        company: "Beijing PM2.5 Air Quality Analysis",
+        timeframe: "April 2026",
+        role: "Project & ETL Lead",
+        achievements: [
+          <>
+            Engineered an end-to-end analytics pipeline on 43,824 hourly observations, handling datetime synthesis, advanced imputation for 2,067 nulls, and complex feature engineering.
+          </>,
+          <>
+            Produced 11 EDA visualizations and a dual-view Tableau dashboard with a 6-KPI framework, translating statistical analysis into 3 operational recommendations for emission curtailment.
+          </>,
+        ],
+        images: [],
+      },
+      {
+        company: "Adani Total Gas Ltd.",
+        timeframe: "2025",
+        role: "Financial Modeler",
+        achievements: [
+          <>
+            Constructed a 4-year consolidated financial model (FY2022–FY2025) from raw annual reports, computing 12+ financial ratios across liquidity, efficiency, and profitability dimensions.
+          </>,
+          <>
+            Built a comprehensive DCF valuation model using FCFF and FCFE frameworks, estimating Cost of Equity via CAPM and quantifying valuation ranges through 5x5 grid sensitivity analysis.
+          </>,
+        ],
+        images: [],
+      },
+      {
         company: "TruthLens",
         timeframe: "2025",
         role: "Machine Learning Engineer",

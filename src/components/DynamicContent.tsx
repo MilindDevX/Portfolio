@@ -144,7 +144,7 @@ export const DynamicTechnicalSkills = () => {
 
 export const DynamicHireMe = () => {
   const { role } = useRole();
-  const resumeLink = role === "Full Stack" ? "/docs/resume-fullstack.pdf" : "/docs/resume-data-analyst.pdf";
+  const resumeLink = role === "Full Stack" ? "/docs/Milind_Bansal_Full_Stack_Resume.pdf" : "/docs/Milind_Bansal_Data_Analyst_Resume.pdf";
   
   return (
     <RevealFx translateY="16" delay={0.2} fillWidth>
