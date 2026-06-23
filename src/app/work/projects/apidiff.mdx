@@ -9,10 +9,10 @@ team:
     role: "Full-stack Developer"
     avatar: "/images/avatar-male.png"
     linkedIn: "https://www.linkedin.com/in/milind-bansal-177606244/"
-hostedUrl: "https://routelens-xi.vercel.app/"
 role: "Frontend Engineer"
 stack: ["Next.js 14", "TypeScript", "Tailwind CSS", "js-yaml"]
 link: "https://github.com/MilindDevX/routelens"
+hostedUrl: "https://routelens-xi.vercel.app/"
 ---
 
 ## Project Overview
@@ -25,7 +25,7 @@ Developers frequently struggle with undocumented APIs or massive Swagger files t
 
 ## Technical Decisions & Architecture
 
-The guiding principle for RouteLens was **Zero Outbound Network Calls**. 
+The guiding principle for RouteLens was **Zero Outbound Network Calls**.
 
 - **Next.js 14 Static Export**: By using `output: 'export'`, the tool compiles into pure HTML/JS/CSS. No serverless functions, Edge Runtime, or Node.js server is required. This guarantees data privacy and free hosting on Vercel Hobby.
 - **Client-Side OpenAPI Parsing**: Specs (both JSON and YAML) are parsed entirely in the browser. External `$ref` URLs are handled gracefully without crashing the app.

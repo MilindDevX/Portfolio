@@ -1,0 +1,56 @@
+---
+title: "Why Classical DCF Valuation Failed for Adani Total Gas Ltd."
+publishedAt: "2025-10-20"
+summary: "A deep dive into why using the classical Free Cash Flow to Firm (FCFF) method for Adani Total Gas resulted in negative cash flows and a fundamentally flawed valuation."
+image: "/images/adani-gas.png"
+tag: "Data Analysis"
+---
+
+When I set out to build a comprehensive financial model and DCF (Discounted Cash Flow) valuation for Adani Total Gas Ltd., I initially approached it using the classical valuation method. However, I quickly realized that applying textbook formulas without adjusting for the company's specific growth stage and capital structure led to a completely flawed valuation. 
+
+Here is why the classical method failed, and how I had to adapt my approach.
+
+## The Pitfall of the Classical Method
+
+In a standard DCF model, the intrinsic value of a company is determined by forecasting its **Free Cash Flow to Firm (FCFF)** and discounting it back to the present value using the Weighted Average Cost of Capital (WACC). 
+
+The classical formula for FCFF is:
+`FCFF = EBIT * (1 - Tax Rate) + Non-Cash Charges - Capital Expenditure - Changes in Working Capital`
+
+For a mature, stable company, this formula works perfectly. But Adani Total Gas was in a massive expansion phase, aggressively investing in city gas distribution networks and infrastructure. 
+
+When I plugged their numbers into the classical FCFF formula, **the FCFF turned out to be consistently negative**. 
+
+## Why Did FCFF Go Negative?
+
+The negative FCFF wasn't a sign that the company was failing; it was a symptom of hyper-growth:
+1. **Massive Capital Expenditure (CapEx)**: Adani Total Gas was heavily reinvesting its operating cash flows into building new infrastructure. This CapEx vastly exceeded their Depreciation & Amortization.
+2. **Aggressive Reinvestment Rates**: To sustain their multi-year revenue growth (from Rs.3,252Cr to Rs.5,457Cr), their reinvestment rate was exceptionally high.
+
+If you blindly discount negative FCFFs, your model will tell you the company is virtually worthless, which contradicted their massive market capitalization and revenue growth. The classical method was penalizing the company for investing in its own future.
+
+## The Solution: Adapting the Valuation Framework
+
+To get a true intrinsic value, I had to move beyond the rigid classical FCFF approach and employ a more nuanced framework:
+
+### 1. Utilizing Free Cash Flow to Equity (FCFE)
+Instead of just looking at FCFF, I modeled the **Free Cash Flow to Equity (FCFE)**. FCFE accounts for net borrowing. Because Adani was financing a significant portion of its CapEx through debt rather than just operating cash flows, FCFE provided a much more accurate picture of the cash actually available to equity shareholders.
+
+### 2. Modeling Expected Growth via ROIC
+Instead of using historical averages for growth, I modeled the Expected Growth Rate structurally:
+`Expected Growth Rate = Return on Invested Capital (ROIC) × Reinvestment Rate`
+
+By differentiating sector-wise applicability and accurately mapping their high ROIC against their massive reinvestment rate, the model could mathematically justify their growth trajectory without breaking the cash flow projections.
+
+### 3. Adjusting the Terminal Value
+I calculated the Terminal Value using India’s nominal GDP growth rate (8%), assuming that as the company matures and infrastructure is built, its CapEx will normalize to match depreciation, turning FCFF positive in the terminal year.
+
+## The Verdict
+
+After correcting the methodology, estimating the Cost of Equity via CAPM (13.8%), and performing sensitivity analysis on a 5x5 grid, the model finally yielded a mathematically sound intrinsic value of **Rs.154.7**. 
+
+Even with the hyper-growth adjustments, the stock was trading at Rs.602.6, leading to the conclusion that it was critically **OVERVALUED**.
+
+## Takeaway
+
+Financial modeling is never a one-size-fits-all exercise. If you apply a classical valuation method to a hyper-growth, capital-intensive company, you will almost certainly generate negative cash flows and a fundamentally wrong valuation. You have to look at *how* the growth is financed and adjust your framework accordingly.
