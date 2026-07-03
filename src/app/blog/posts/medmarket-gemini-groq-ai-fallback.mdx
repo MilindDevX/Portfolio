@@ -1,0 +1,141 @@
+---
+title: "Building a Resilient AI Layer: Gemini + Groq Fallback in MedMarket"
+publishedAt: "2026-06-26"
+summary: "How I built a zero-downtime AI provider fallback system in MedMarket — using Gemini as the primary and Groq LLaMA as an automatic backup — so quota limits and rate errors never reach the user."
+tag: "AI"
+---
+
+AI features in production have a dirty secret: they're only as reliable as the API quota behind them.
+
+When I shipped MedMarket's first two AI features — **AI Document Verification** for pharmacy KYB and **AI Pharmacy Insights** for business analytics — they worked great in testing. Gemini 2.5 Flash is fast, cheap (free tier), and accurate for structured document extraction.
+
+Then I hit the free-tier RPM limit at 3am during a seeding run.
+
+The endpoint crashed. The admin panel returned a raw `500`. No user-friendly message, no retry, no backup. It just failed silently. That's not production-grade — that's a demo.
+
+So I redesigned the entire AI layer around a single principle: **the user should never know which AI provider answered their request, or whether one failed at all.**
+
+## The Architecture
+
+The new system lives in a single file: `src/lib/ai.ts`. It exports one function:
+
+```typescript
+export async function generateWithFallback(
+  prompt: string,
+  imageData?: { base64: string; mimeType: string } | null,
+): Promise<string>
+```
+
+Callers never touch a provider SDK directly. They pass a prompt, optionally attach an inline image, and get back a plain text string. Whether that string came from Gemini or Groq is completely invisible to the controller.
+
+## The Fallback Decision
+
+The key design question was: **when should we fall back to Groq?**
+
+Falling back too eagerly wastes quota on both sides and masks bugs. Falling back too conservatively means users hit errors that Groq could have handled.
+
+I settled on a set of signals I call "quota errors" — conditions where Gemini is temporarily unavailable for capacity reasons, not logic reasons:
+
+```typescript
+const quotaSignals = [
+  '429', 'quota', 'rate limit', 'rate_limit',
+  'resource_exhausted', 'too many requests',
+  'overloaded', 'service unavailable', '503',
+  'capacity', 'temporarily', 'token limit',
+];
+```
+
+If the error message contains any of these, we fall back to Groq. If it's something else — a content policy block, a malformed prompt, an auth error — we re-throw immediately. There's no point wasting Groq quota on errors that Groq would also return.
+
+```typescript
+function shouldFallbackToGroq(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return quotaSignals.some(s => msg.includes(s));
+}
+```
+
+## Handling Images
+
+This was the trickiest part. Gemini 2.5 Flash supports multimodal input — you can send a base64 image alongside text and it will read the document visually. Groq's LLaMA models are text-only.
+
+So when Gemini fails on an image-based prompt and we fall back to Groq, we inject a note into the prompt instead:
+
+```typescript
+const groqPrompt = imageData
+  ? `${prompt}\n\n[Note: An image was provided but could not be sent to this text-only model.
+     Return UNREADABLE for any field requiring visual extraction.]`
+  : prompt;
+```
+
+This means the document verification endpoint degrades gracefully on Groq fallback — instead of crashing, it returns `UNREADABLE` for the extracted fields, which the confidence scoring already handles correctly. The admin gets a `medium` confidence score instead of a hard error.
+
+## The Error Class
+
+I defined a typed error class to make the error handling contract explicit:
+
+```typescript
+export class AiUnavailableError extends Error {
+  public readonly provider: 'gemini' | 'groq' | 'both';
+  public readonly isQuota: boolean;
+}
+```
+
+This lets controllers distinguish between:
+- `provider: 'gemini', isQuota: true` → Groq is handling it (transparent to the user)
+- `provider: 'groq', isQuota: false` → Groq key isn't configured (admin needs to act)
+- `provider: 'both', isQuota: true` → Both are rate-limited, return `HTTP 503`
+
+The controller maps these to clean HTTP responses:
+
+```typescript
+function handleAiError(res: Response, err: AiUnavailableError) {
+  if (err.isQuota) {
+    return errorResponse(res,
+      'AI services are temporarily at capacity. Please try again in a few minutes.',
+      503,
+    );
+  }
+  return errorResponse(res,
+    'AI service is not properly configured on this server. Contact the administrator.',
+    503,
+  );
+}
+```
+
+No stack traces, no SDK error messages, no exposed provider names — just a message the user can actually act on.
+
+## The Groq Model Choice
+
+I picked `llama-3.3-70b-versatile` for several reasons:
+
+1. **It's free.** Groq's free tier is generous enough to handle burst traffic that would otherwise exceed Gemini's RPM limit.
+2. **It follows structured output instructions reliably.** The pharmacy insights prompt asks for a JSON array. LLaMA 3.3 70B returns clean JSON without markdown fences or extraneous text — the same parsing code that handles Gemini responses works unchanged.
+3. **It's fast.** Groq's LPU hardware delivers ~275 tokens/second, so the fallback adds maybe 200ms of latency, not 2 seconds.
+
+I've written about Groq's hardware advantage before — in [FeedbackOS's real-time triage pipeline](/blog/groq-vs-openai-real-time-ai-triage), it cut per-request latency from ~950ms (GPT-4o) to ~180ms. Here the latency isn't the primary motivation — reliability is — but it's a nice bonus.
+
+## What the Logs Look Like
+
+In development with a throttled Gemini key, you see this in the backend console:
+
+```
+[AI] Gemini quota/rate-limit hit — falling back to Groq. (429 Too Many Requests)
+[AI] Response successfully generated via Groq fallback.
+```
+
+In the Pharmacy dashboard, the AI Insights panel loads normally. No error state, no spinner that never resolves. The user has no idea Gemini was unavailable.
+
+## Lessons
+
+**1. Your AI client should be a boundary, not a passthrough.**
+Controllers shouldn't import SDK objects. They should call a function and get a string back. The provider is an infrastructure decision that doesn't belong in business logic.
+
+**2. Design the degraded state first.**
+I knew before writing a line of code exactly what should happen if Gemini was down (try Groq), if Groq was down (try Groq anyway, then 503), and if both were down (503 with a friendly message). Designing fallback states upfront forces you to think about the problem honestly.
+
+**3. Error classification matters.**
+A `429` and a content policy block look the same from the outside — both are exceptions. But they require completely different responses. Without deliberate classification, you end up retrying errors that will never succeed, or not retrying errors that would have.
+
+---
+
+The full implementation is in [`src/lib/ai.ts`](https://github.com/MilindDevX/MedMarket/blob/main/backend/src/lib/ai.ts). MedMarket is open source on GitHub.

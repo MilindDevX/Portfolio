@@ -133,10 +133,10 @@ const about: About = {
         role: "Full-Stack Architect",
         achievements: [
           <>
-            Architected a multi-sided marketplace connecting pharmacies and consumers with strict CDSCO compliance and DPCO price enforcement.
+            Architected a multi-sided marketplace connecting pharmacies and consumers with strict CDSCO compliance and DPCO price enforcement at the database level.
           </>,
           <>
-            Built with React 19, Express.js 5, and PostgreSQL. Designed robust Role-Based Access Control and complex inventory workflows.
+            Built a resilient dual-provider AI layer (Gemini 2.5 Flash → Groq LLaMA 3.3 70B fallback) for KYB document verification and pharmacy business insights — zero user-facing errors on quota limits.
           </>,
         ],
         images: [],
