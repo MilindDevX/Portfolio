@@ -157,7 +157,7 @@ export const DynamicHireMe = () => {
         border="brand-alpha-strong"
         position="relative"
         overflow="hidden"
-        s={{ direction: "column", padding: "32", gap: "24" }}
+        s={{ direction: "column" }}
       >
         <Background
           top="0"
