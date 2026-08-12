@@ -2,7 +2,7 @@
 
 Welcome to my personal portfolio, showcasing my work as a Full-Stack Developer specializing in Next.js, Node.js, and PostgreSQL.
 
-View the live portfolio [here](https://portfolio-tau-dun-63.vercel.app).
+View the live portfolio [here](https://portfolio-milind.vercel.app).
 
 ## Overview
 
