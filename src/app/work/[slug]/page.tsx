@@ -91,10 +91,12 @@ export default async function Project({
           image: `${baseURL}${person.avatar}`,
         }}
       />
+      <Row fillWidth paddingBottom="24">
+        <Button href="/work" variant="secondary" size="s" prefixIcon="chevronLeft">
+          Back to Projects
+        </Button>
+      </Row>
       <Column maxWidth="s" gap="16" horizontal="center" align="center">
-        <SmartLink href="/work">
-          <Text variant="label-strong-m">Projects</Text>
-        </SmartLink>
         <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
           {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
         </Text>

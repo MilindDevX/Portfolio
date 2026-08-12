@@ -13,6 +13,7 @@ import {
   Avatar,
   Media,
   Line,
+  Button,
 } from "@once-ui-system/core";
 import { baseURL, about, blog, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
@@ -93,10 +94,12 @@ export default async function Blog({ params }: { params: Promise<{ slug: string 
               image: `${baseURL}${person.avatar}`,
             }}
           />
+          <Row fillWidth paddingBottom="24">
+            <Button href="/blog" variant="secondary" size="s" prefixIcon="chevronLeft">
+              Back to Blog
+            </Button>
+          </Row>
           <Column maxWidth="s" gap="16" horizontal="center" align="center">
-            <SmartLink href="/blog">
-              <Text variant="label-strong-m">Blog</Text>
-            </SmartLink>
             <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
               {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
             </Text>
