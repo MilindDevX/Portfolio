@@ -46,9 +46,9 @@ const home: Home = {
   label: "Home",
   title: `${person.name}'s Portfolio`,
   description: `Milind Bansal is a Full-Stack Developer specializing in Next.js, Node.js, and PostgreSQL. View my portfolio of scalable AI and web applications.`,
-  headline: <>Building scalable full-stack applications</>,
+  headline: <>I build systems where the architecture is the product</>,
   headlineData: <>Turning complex data into actionable insights</>,
-  sublineText: <>I design systems that solve real problems, from AI-powered feedback triage to compliant digital marketplaces and zero-backend developer tools.</>,
+  sublineText: <>I design systems that solve real problems — from AI-powered feedback triage to compliant digital marketplaces and zero-backend developer tools.</>,
   sublineDataText: <>I build machine learning pipelines, predictive forecasting models, and interactive visualizations that transform raw data into strategic business value.</>,
   featured: {
     display: true,

@@ -20,7 +20,6 @@ export const DynamicSubline = () => {
   const { role } = useRole();
   return (
     <>
-      I'm {person.firstName}, a {role === "Full Stack" ? person.role.toLowerCase() : "data analyst"}. <br />
       {role === "Full Stack" ? home.sublineText : home.sublineDataText}
     </>
   );
@@ -57,6 +56,7 @@ export const DynamicProjects = ({ allProjects, range }: { allProjects: any[], ra
           avatars={post.metadata.team?.map((member: any) => ({ src: member.avatar })) || []}
           link={post.metadata.link || ""}
           hostedUrl={post.metadata.hostedUrl || ""}
+          stack={post.metadata.stack || []}
         />
       ))}
     </Column>
