@@ -106,11 +106,11 @@ No stack traces, no SDK error messages, no exposed provider names — just a mes
 
 ## The Groq Model Choice
 
-I picked `llama-3.3-70b-versatile` for several reasons:
+The fallback model is `openai/gpt-oss-120b`, Groq's hosted build of OpenAI's open-weight model. It's the current choice for a few reasons:
 
-1. **It's free.** Groq's free tier is generous enough to handle burst traffic that would otherwise exceed Gemini's RPM limit.
-2. **It follows structured output instructions reliably.** The pharmacy insights prompt asks for a JSON array. LLaMA 3.3 70B returns clean JSON without markdown fences or extraneous text — the same parsing code that handles Gemini responses works unchanged.
-3. **It's fast.** Groq's LPU hardware delivers ~275 tokens/second, so the fallback adds maybe 200ms of latency, not 2 seconds.
+1. **It's free-tier friendly.** Groq's free tier is generous enough to handle burst traffic that would otherwise exceed Gemini's RPM limit.
+2. **It supports structured outputs natively.** The pharmacy insights prompt asks for a JSON array, and GPT-OSS 120B returns clean JSON without markdown fences or extraneous text — the same parsing code that handles Gemini responses works unchanged.
+3. **It reasons well at low latency.** Groq's LPU inference delivers strong reasoning quality at hundreds of tokens per second, so the fallback adds maybe 200ms of latency, not 2 seconds.
 
 I've written about Groq's hardware advantage before — in [FeedbackOS's real-time triage pipeline](/blog/groq-vs-openai-real-time-ai-triage), it cut per-request latency from ~950ms (GPT-4o) to ~180ms. Here the latency isn't the primary motivation — reliability is — but it's a nice bonus.
 

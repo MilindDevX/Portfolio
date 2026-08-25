@@ -125,7 +125,14 @@ const about: About = {
             Implemented robust security layers including AES-256-GCM encryption for webhooks and comprehensive Zod validation.
           </>,
         ],
-        images: [],
+        images: [
+          {
+            src: "/images/feedbackos.png",
+            alt: "FeedbackOS Dashboard",
+            width: 16,
+            height: 10,
+          },
+        ],
       },
       {
         company: "MedMarket India",
@@ -136,7 +143,7 @@ const about: About = {
             Architected a multi-sided marketplace connecting pharmacies and consumers with strict CDSCO compliance and DPCO price enforcement at the database level.
           </>,
           <>
-            Built a resilient dual-provider AI layer (Gemini 2.5 Flash → Groq LLaMA 3.3 70B fallback) for KYB document verification and pharmacy business insights — zero user-facing errors on quota limits.
+            Built a resilient dual-provider AI layer (Gemini 2.5 Flash → Groq GPT-OSS 120B fallback) for KYB document verification and pharmacy business insights — zero user-facing errors on quota limits.
           </>,
         ],
         images: [],
@@ -153,7 +160,14 @@ const about: About = {
             Implemented complex OpenAPI spec parsing and local storage sync with zero outbound network calls.
           </>,
         ],
-        images: [],
+        images: [
+          {
+            src: "/images/routelens.png",
+            alt: "RouteLens Interface",
+            width: 16,
+            height: 10,
+          },
+        ],
       },
       {
         company: "TruthLens",
@@ -209,7 +223,14 @@ const about: About = {
             Implemented efficient local state updates and seamless folder organization within a minimalist glassmorphism-inspired UI.
           </>,
         ],
-        images: [],
+        images: [
+          {
+            src: "/images/quicknotes.png",
+            alt: "QuickNotes App",
+            width: 16,
+            height: 10,
+          },
+        ],
       },
     ],
     experiencesData: [
